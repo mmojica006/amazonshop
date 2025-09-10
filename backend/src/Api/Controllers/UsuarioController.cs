@@ -5,9 +5,14 @@ using Ecommerce.Application.Features.Auths.Users.Commands.RegisterUser;
 using Ecommerce.Application.Features.Auths.Users.Commands.ResetPassword;
 using Ecommerce.Application.Features.Auths.Users.Commands.ResetPasswordByToken;
 using Ecommerce.Application.Features.Auths.Users.Commands.SendPassword;
+using Ecommerce.Application.Features.Auths.Users.Commands.UpdateAdminStatusUser;
+using Ecommerce.Application.Features.Auths.Users.Commands.UpdateAdminUser;
 using Ecommerce.Application.Features.Auths.Users.Commands.UpdateUser;
+using Ecommerce.Application.Features.Auths.Users.Queries.GetUserById;
 using Ecommerce.Application.Features.Auths.Users.Vms;
+using Ecommerce.Application.Models.Authorization;
 using Ecommerce.Application.Models.ImageManagement;
+using Ecommerce.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -103,6 +108,31 @@ public class UsuarioController : ControllerBase
 
 
         return await _mediator.Send(request);
+    }
+
+    [Authorize(Roles = Role.ADMIN)]
+    [HttpPut("updateAdminUser", Name = "UpdateAdminUser")]
+    [ProducesResponseType(typeof(Usuario), (int)HttpStatusCode.OK)]
+    public async Task<ActionResult<Usuario>> UpdateAdminUser([FromBody] UpdateAdminUserCommand request)
+    {
+        return await _mediator.Send(request);
+    }
+
+    [Authorize(Roles = Role.ADMIN)]
+    [HttpPut("updateAdminStastusUser", Name = "UpdateAdminStastusUser")]
+    [ProducesResponseType(typeof(Usuario), (int)HttpStatusCode.OK)]
+    public async Task<ActionResult<Usuario>> UpdateAdminStastusUser([FromBody] UpdateAdminStatusUserCommand request)
+    {
+        return await _mediator.Send(request);
+    }
+
+    [Authorize(Roles = Role.ADMIN)]
+    [HttpGet("{id}", Name = "GetUsuarioById")]
+    [ProducesResponseType(typeof(AuthResponse), (int)HttpStatusCode.OK)]
+    public async Task<ActionResult<AuthResponse>> GetUsuarioById(string id)
+    {
+        var query = new GetUserByIdQuery(id);
+        return await _mediator.Send(query);
     }
 
 

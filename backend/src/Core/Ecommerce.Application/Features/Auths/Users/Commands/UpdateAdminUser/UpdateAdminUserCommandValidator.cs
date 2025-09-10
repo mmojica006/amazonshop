@@ -14,7 +14,7 @@ public class UpdateAdminUserCommandValidator : AbstractValidator<UpdateAdminUser
         .NotEmpty().WithMessage("El apellido no puede estar vacio");
 
         RuleFor(x => x.Telefono)
-        .NotEmpty().WithMessage("El telefno no puede estar vacio");
+        .NotEmpty().WithMessage("El teléfono no puede estar vacio");
 
 
     }
