@@ -50,5 +50,4 @@ public class ShoppingCartController : ControllerBase
         return await _mediator.Send(new DeleteShoppingCartItemCommand() { Id = id });
     }
 
-
 }

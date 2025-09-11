@@ -10,7 +10,7 @@ namespace Ecommerce.Application.Features.ShoppingCarts.Commands.UpdateShoppingCa
 
 public class UpdateShoppingCartCommandHandler : IRequestHandler<UpdateShoppingCartCommand, ShoppingCartVm>
 {
-    
+
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
@@ -26,7 +26,7 @@ public class UpdateShoppingCartCommandHandler : IRequestHandler<UpdateShoppingCa
             p => p.ShoppingCartMasterId == request.ShoppingCartId
         );
 
-        if(shoppingCartToUpdate is null)
+        if (shoppingCartToUpdate is null)
         {
             throw new NotFoundException(nameof(ShoppingCart), request.ShoppingCartId!);
         }
@@ -40,7 +40,8 @@ public class UpdateShoppingCartCommandHandler : IRequestHandler<UpdateShoppingCa
 
         var shoppingCartItemsToAdd = _mapper.Map<List<ShoppingCartItem>>(request.ShoppingCartItems);
 
-        shoppingCartItemsToAdd.ForEach(x => {
+        shoppingCartItemsToAdd.ForEach(x =>
+        {
             x.ShoppingCartId = shoppingCartToUpdate.Id;
             x.ShoppingCartMasterId = request.ShoppingCartId;
         });
@@ -49,13 +50,13 @@ public class UpdateShoppingCartCommandHandler : IRequestHandler<UpdateShoppingCa
 
         var resultado = await _unitOfWork.Complete();
 
-        if(resultado <= 0)
+        if (resultado <= 0)
         {
             throw new Exception("No se pudo agregar productos items al carrito de compras");
         }
 
 
-        
+
         var includes = new List<Expression<Func<ShoppingCart, object>>>();
         includes.Add(p => p.ShoppingCartItems!.OrderBy(x => x.Producto));
         var shoppingCart = await _unitOfWork.Repository<ShoppingCart>().GetEntityAsync(
