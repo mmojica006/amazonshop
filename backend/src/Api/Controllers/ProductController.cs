@@ -1,6 +1,8 @@
 using System.Net;
 using Ecommerce.Application.Contracts.Infrastructure;
 using Ecommerce.Application.Features.Products.Commands.CreateProduct;
+using Ecommerce.Application.Features.Products.Commands.DeleteProduct;
+using Ecommerce.Application.Features.Products.Commands.UpdateProduct;
 using Ecommerce.Application.Features.Products.Queries.GetProductById;
 using Ecommerce.Application.Features.Products.Queries.GetProductList;
 using Ecommerce.Application.Features.Products.Queries.PaginationProducts;
@@ -92,4 +94,46 @@ public class ProductController : ControllerBase
 
     }
 
+    [Authorize(Roles = Role.ADMIN)]
+    [HttpPut("update", Name = "UpdateProduct")]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    public async Task<ActionResult<ProductVm>> UpdateProduct([FromForm] UpdateProductCommand request)
+    {
+        var listFotoUrls = new List<CreateProductImageCommand>();
+
+        if (request.Fotos is not null)
+        {
+            foreach (var foto in request.Fotos)
+            {
+                var resultImage = await _manageImageService.UploadImage(new ImageData
+                {
+                    ImageStream = foto.OpenReadStream(),
+                    Nombre = foto.Name
+                });
+
+                var fotoCommand = new CreateProductImageCommand
+                {
+                    PublicCode = resultImage.PublicId,
+                    Url = resultImage.Url
+                };
+
+                listFotoUrls.Add(fotoCommand);
+            }
+            request.ImageUrls = listFotoUrls;
+        }
+
+        return await _mediator.Send(request);
+
+    }
+
+    [Authorize(Roles = Role.ADMIN)]
+    [HttpDelete("status/{id}", Name = "UpdateStatusProduct")]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    public async Task<ActionResult<ProductVm>> UpdateStatusProduct(int id)
+    {
+        var request = new DeleteProductCommand(id);
+        return await _mediator.Send(request);
+    }
+
 }
+
