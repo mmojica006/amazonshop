@@ -27,7 +27,6 @@ public class DeleteReviewCommandHandler : IRequestHandler<DeleteReviewCommand>
         _unitOfWork.Repository<Review>().DeleteEntity(reviewToDelete);
         await _unitOfWork.Complete();
 
-
         return Unit.Value;
     }
 }
