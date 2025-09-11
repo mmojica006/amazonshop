@@ -9,7 +9,11 @@ using Ecommerce.Application.Features.Auths.Users.Commands.UpdateAdminStatusUser;
 using Ecommerce.Application.Features.Auths.Users.Commands.UpdateAdminUser;
 using Ecommerce.Application.Features.Auths.Users.Commands.UpdateUser;
 using Ecommerce.Application.Features.Auths.Users.Queries.GetUserById;
+using Ecommerce.Application.Features.Auths.Users.Queries.GetUserByToken;
+using Ecommerce.Application.Features.Auths.Users.Queries.GetUserByUsername;
+using Ecommerce.Application.Features.Auths.Users.Queries.PaginationUsers;
 using Ecommerce.Application.Features.Auths.Users.Vms;
+using Ecommerce.Application.Features.Shared.Queries;
 using Ecommerce.Application.Models.Authorization;
 using Ecommerce.Application.Models.ImageManagement;
 using Ecommerce.Domain;
@@ -133,6 +137,32 @@ public class UsuarioController : ControllerBase
     {
         var query = new GetUserByIdQuery(id);
         return await _mediator.Send(query);
+    }
+
+    [HttpGet("", Name = "CurrentUser")]
+    [ProducesResponseType(typeof(AuthResponse), (int)HttpStatusCode.OK)]
+    public async Task<ActionResult<AuthResponse>> CurrentUser()
+    {
+        var query = new GetUserByTokenQuery();
+        return await _mediator.Send(query);
+    }
+
+    [Authorize(Roles = Role.ADMIN)]
+    [HttpGet("username/{username}", Name = "GetUsuarioByUsername")]
+    [ProducesResponseType(typeof(AuthResponse), (int)HttpStatusCode.OK)]
+    public async Task<ActionResult<AuthResponse>> GetUsuarioByUsername(string username)
+    {
+        var query = new GetUserByUsernameQuery(username);
+        return await _mediator.Send(query);
+    }
+
+    [Authorize(Roles = Role.ADMIN)]
+    [HttpGet("paginationAdmin", Name = "PaginationUser")]
+    [ProducesResponseType(typeof(PaginationVm<Usuario>), (int)HttpStatusCode.OK)]
+    public async Task<ActionResult<PaginationVm<Usuario>>> PaginationUser( [FromQuery] PaginationUsersQuery paginationUsersQuery )
+    {
+        var paginationUser = await _mediator.Send(paginationUsersQuery);
+        return Ok(paginationUser);
     }
 
 
