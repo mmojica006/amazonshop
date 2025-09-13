@@ -14,17 +14,17 @@ namespace Ecommerce.Application.Features.Orders.Commands.CreateOrder;
 
 public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, OrderVm>
 {
-    
+
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IAuthService _authService;
     private readonly UserManager<Usuario> _userManager;
     private readonly StripeSettings _stripeSettings;
 
-    public CreateOrderCommandHandler(IUnitOfWork unitOfWork, 
-        IMapper mapper, 
-        IAuthService authService, 
-        UserManager<Usuario> userManager, 
+    public CreateOrderCommandHandler(IUnitOfWork unitOfWork,
+        IMapper mapper,
+        IAuthService authService,
+        UserManager<Usuario> userManager,
         IOptions<StripeSettings> stripeSettings
     )
     {
@@ -43,7 +43,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
             true
         );
 
-        if(orderPending is not null)
+        if (orderPending is not null)
         {
             await _unitOfWork.Repository<Order>().DeleteAsync(orderPending);
         }
@@ -60,7 +60,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
         );
 
         var user = await _userManager.FindByNameAsync(_authService.GetSessionUser());
-        if(user  is null)
+        if (user is null)
         {
             throw new Exception("El usuario no esta autenticado");
         }
@@ -71,7 +71,8 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
             false
         );
 
-        OrderAddress orderAddress = new (){
+        OrderAddress orderAddress = new()
+        {
             Direccion = direccion.Direccion,
             Ciudad = direccion.Ciudad,
             CodigoPostal = direccion.CodigoPostal,
@@ -82,38 +83,39 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
 
         await _unitOfWork.Repository<OrderAddress>().AddAsync(orderAddress);
 
-        var subtotal =  Math.Round( shoppingCart.ShoppingCartItems!.Sum(x=>x.Precio*x.Cantidad) , 2);
-        var impuesto =    Math.Round(  subtotal *Convert.ToDecimal(0.18) , 2);
-        var precioEnvio =  subtotal < 100 ? 10 : 25;
+        var subtotal = Math.Round(shoppingCart.ShoppingCartItems!.Sum(x => x.Precio * x.Cantidad), 2);
+        var impuesto = Math.Round(subtotal * Convert.ToDecimal(0.18), 2);
+        var precioEnvio = subtotal < 100 ? 10 : 25;
         var total = subtotal + impuesto + precioEnvio;
 
         var nombreComprador = $"{user.Nombre}  {user.Apellido}";
-    var order = new Order(nombreComprador, user.UserName!, orderAddress, subtotal, total, impuesto, precioEnvio);
+        var order = new Order(nombreComprador, user.UserName!, orderAddress, subtotal, total, impuesto, precioEnvio);
 
         await _unitOfWork.Repository<Order>().AddAsync(order);
 
         var items = new List<OrderItem>();
 
-        foreach(var shoppingElement in shoppingCart.ShoppingCartItems!)
+        foreach (var shoppingElement in shoppingCart.ShoppingCartItems!)
         {
-                var orderItem = new OrderItem
-                {
-                    ProductNombre = shoppingElement.Producto,
-                    ProductId = shoppingElement.ProductId,
-                    ImagenUrl = shoppingElement.Imagen,
-                    Precio = shoppingElement.Precio,
-                    Cantidad = shoppingElement.Cantidad,
-                    OrderId = order.Id
-                };
+            var orderItem = new OrderItem
+            {
+                ProductNombre = shoppingElement.Producto,
+                ProductId = shoppingElement.ProductId,
+                ImagenUrl = shoppingElement.Imagen,
+                Precio = shoppingElement.Precio,
+                Cantidad = shoppingElement.Cantidad,
+                OrderId = order.Id
+            };
 
-                items.Add(orderItem);
+            items.Add(orderItem);
         }
 
         _unitOfWork.Repository<OrderItem>().AddRange(items);
 
-        var resultado =  await _unitOfWork.Complete();
+        var resultado = await _unitOfWork.Complete();
 
-        if(resultado<=0){
+        if (resultado <= 0)
+        {
             throw new Exception("Error creando la orden de compra");
         }
 
@@ -121,13 +123,13 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
         var service = new PaymentIntentService();
         PaymentIntent intent;
 
-        if(string.IsNullOrEmpty(order.PaymentIntentId))
+        if (string.IsNullOrEmpty(order.PaymentIntentId))
         {
             var options = new PaymentIntentCreateOptions
             {
                 Amount = (long)order.Total,
                 Currency = "usd",
-                PaymentMethodTypes = new List<string>{"card"}
+                PaymentMethodTypes = new List<string> { "card" }
             };
 
             intent = await service.CreateAsync(options);
@@ -135,7 +137,8 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
             order.ClientSecret = intent.ClientSecret;
             order.StripeApiKey = _stripeSettings.PublishbleKey;
         }
-        else{
+        else
+        {
             var options = new PaymentIntentUpdateOptions
             {
                 Amount = (long)order.Total
@@ -147,7 +150,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
         _unitOfWork.Repository<Order>().UpdateEntity(order);
         var resultadoOrder = await _unitOfWork.Complete();
 
-        if(resultadoOrder <=0 )
+        if (resultadoOrder <= 0)
         {
             throw new Exception("Error creando el payment intent en stripe");
         }
