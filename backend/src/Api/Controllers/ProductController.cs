@@ -52,6 +52,15 @@ public class ProductController : ControllerBase
         return Ok(paginationProduct);
     }
 
+     [Authorize(Roles = Role.ADMIN)]
+    [HttpGet("paginationAdmin", Name = "PaginationProductAdmin")]
+    [ProducesResponseType(typeof(PaginationVm<ProductVm>), (int)HttpStatusCode.OK)]
+    public async Task<ActionResult<PaginationVm<ProductVm>>> PaginationAdmin( [FromQuery] PaginationProductsQuery paginationProductsQuery )
+    {
+        var paginationProduct = await _mediator.Send(paginationProductsQuery);
+        return Ok(paginationProduct);
+    }
+
 
     [AllowAnonymous]
     [HttpGet("{id}", Name = "GetProductById")]
